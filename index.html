@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14532d">
+<title>Inventory Manager</title>
+<style>
+:root{--green:#14532d;--green2:#166534;--bg:#f4f7f5;--card:#fff;--ink:#17231b;--muted:#66736a;--line:#dce5de;--red:#b42318;--amber:#9a6700}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:var(--green);color:#fff;padding:20px 16px 16px;position:sticky;top:0;z-index:3;box-shadow:0 2px 8px #0001}
+header h1{font-size:22px;margin:0}header p{margin:3px 0 0;color:#d7f4df;font-size:13px}
+main{max-width:760px;margin:auto;padding:14px 12px 90px}
+.tabs{display:flex;gap:7px;overflow:auto;margin:0 0 14px}
+.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;white-space:nowrap;font-weight:650;color:var(--ink)}
+.tab.active{background:var(--green);color:#fff;border-color:var(--green)}
+.panel{display:none}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stat,.card,.formbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:0 1px 2px #00000008}
+.stat small{display:block;color:var(--muted);font-size:12px}.stat strong{font-size:23px;display:block;margin-top:5px;overflow-wrap:anywhere}
+h2{font-size:18px;margin:5px 0 12px}h3{font-size:16px;margin:0 0 10px}
+label{display:block;font-size:13px;font-weight:650;margin:10px 0 5px}
+input,select,textarea{width:100%;border:1px solid #cbd5ce;border-radius:10px;padding:12px;font:inherit;background:#fff;color:var(--ink);min-height:44px}
+button{border:0;border-radius:10px;padding:11px 13px;font:inherit;font-weight:700;cursor:pointer}
+.primary{background:var(--green2);color:#fff}.secondary{background:#e7efe9;color:var(--green)}.danger{background:#fee4e2;color:var(--red)}.smallbtn{padding:7px 9px;font-size:13px}
+.row{display:flex;gap:8px;align-items:center}.row>*{flex:1;min-width:0}
+.formbox{margin-bottom:14px}.hint{color:var(--muted);font-size:12px;margin-top:7px}
+.search{margin-bottom:12px}
+.item{background:#fff;border:1px solid var(--line);border-radius:13px;padding:13px;margin-bottom:9px}
+.itemtop{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.itemname{font-weight:750;font-size:16px;overflow-wrap:anywhere}.sku{font-size:12px;color:var(--muted)}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.pill{background:#eef4ef;border-radius:7px;padding:4px 7px;font-size:12px}.pill.low{background:#fff0cc;color:var(--amber)}.pill.out{background:#fee4e2;color:var(--red)}
+.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.empty{padding:25px 10px;text-align:center;color:var(--muted)}
+.notice{padding:11px;border-radius:10px;margin-bottom:10px;background:#fff0cc;color:#774f00}
+.hidden{display:none!important}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:12px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.stat strong{font-size:21px}}
+</style>
+</head>
+<body>
+<header><h1>📦 Inventory Manager</h1><p>Products · Stock · Sales · Profit</p></header>
+<main>
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="products">Products</button>
+    <button class="tab" data-tab="sales">Record sale</button>
+    <button class="tab" data-tab="backup">Backup</button>
+  </div>
+  <section class="panel active" id="dashboard">
+    <div class="grid">
+      <div class="stat"><small>Products</small><strong id="statProducts">0</strong></div>
+      <div class="stat"><small>Total units in stock</small><strong id="statUnits">0</strong></div>
+      <div class="stat"><small>Sales revenue</small><strong id="statRevenue">₹0.00</strong></div>
+      <div class="stat"><small>Estimated profit</small><strong id="statProfit">₹0.00</strong></div>
+    </div>
+    <div id="lowNotice"></div>
+    <h2>Low-stock products</h2><div id="lowList"></div>
+    <h2>Recent sales</h2><div id="recentSales"></div>
+  </section>
+  <section class="panel" id="products">
+    <div class="formbox">
+      <h2 id="productFormTitle">Add a product</h2>
+      <form id="productForm">
+        <input id="editId" type="hidden">
+        <label for="pName">Product name *</label><input id="pName" required maxlength="100" placeholder="e.g. Cotton saree">
+        <div class="row"><div><label for="pSku">SKU / code</label><input id="pSku" maxlength="40" placeholder="e.g. SAR001"></div><div><label for="pQty">Quantity *</label><input id="pQty" required type="number" min="0" step="1" value="1"></div></div>
+        <div class="row"><div><label for="pCost">Cost price (₹) *</label><input id="pCost" required type="number" min="0" step="0.01" placeholder="What you paid"></div><div><label for="pPrice">Selling price (₹) *</label><input id="pPrice" required type="number" min="0" step="0.01" placeholder="Customer price"></div></div>
+        <label for="pLow">Low-stock alert at quantity</label><input id="pLow" type="number" min="0" step="1" value="5">
+        <div class="actions"><button class="primary" type="submit" id="saveProductBtn">Save product</button><button class="secondary hidden" type="button" id="cancelEdit">Cancel edit</button></div>
+        <div class="hint">Profit is estimated as (selling price − cost price) × units sold. Other expenses are not included.</div>
+      </form>
+    </div>
+    <h2>All products</h2><input class="search" id="search" placeholder="Search by product name or code…"><div id="productList"></div>
+  </section>
+  <section class="panel" id="sales">
+    <div class="formbox">
+      <h2>Record a sale</h2>
+      <form id="saleForm">
+        <label for="saleProduct">Product *</label><select id="saleProduct" required></select>
+        <div class="row"><div><label for="saleQty">Quantity sold *</label><input id="saleQty" required type="number" min="1" step="1" value="1"></div><div><label for="salePrice">Selling price per unit (₹)</label><input id="salePrice" type="number" min="0" step="0.01" required></div></div>
+        <label for="saleDate">Sale date</label><input id="saleDate" type="date" required>
+        <button class="primary" type="submit" style="margin-top:12px;width:100%">Record sale and reduce stock</button>
+      </form>
+    </div>
+    <h2>Sales history</h2><div id="salesList"></div>
+  </section>
+  <section class="panel" id="backup">
+    <div class="formbox"><h2>Backup your data</h2><p>Data is stored in this browser on this device. Export a backup regularly so you can restore it if browser data is cleared or the phone changes.</p><button class="primary" id="exportBtn" style="width:100%">Download backup file</button>
+      <label for="importFile">Restore from backup file</label><input type="file" id="importFile" accept=".json,application/json"><p class="hint">Restoring replaces the current product and sales data.</p>
+    </div>
+    <div class="formbox"><h3>Important</h3><p>Do not clear Chrome site data if you have not exported a backup. This basic version stores data locally and does not sync to another phone.</p><button class="danger" id="clearBtn">Delete all app data</button></div>
+  </section>
+  <footer>Inventory Manager · Your stock data stays on this device</footer>
+</main>
+<script>
+(() => {
+const KEY='inventory-manager-v1';
+let state={products:[],sales:[]};
+const $=id=>document.getElementById(id);
+const money=n=>'₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&Array.isArray(s.products)&&Array.isArray(s.sales))state=s}catch(e){alert('Saved data could not be read. Import a valid backup if you have one.')}render()}
+function switchTab(id){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));if(id==='products')renderProducts();if(id==='sales')renderSales()}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+function low(p){return p.qty<=p.low}
+function productCard(p){return `<div class="item"><div class="itemtop"><div><div class="itemname">${esc(p.name)}</div><div class="sku">${p.sku?'Code: '+esc(p.sku):'No code'}</div></div><div><b>${p.qty}</b> in stock</div></div><div class="pills"><span class="pill">Cost ${money(p.cost)}</span><span class="pill">Sell ${money(p.price)}</span><span class="pill ${p.qty===0?'out':low(p)?'low':''}">${p.qty===0?'Out of stock':low(p)?'Low stock':'In stock'}</span></div><div class="actions"><button class="secondary smallbtn" data-edit="${p.id}">Edit</button><button class="secondary smallbtn" data-restock="${p.id}">Add stock</button><button class="danger smallbtn" data-delete="${p.id}">Delete</button></div></div>`}
+function renderProducts(){const q=$('search').value.trim().toLowerCase();const ps=state.products.filter(p=>(p.name+' '+p.sku).toLowerCase().includes(q));$('productList').innerHTML=ps.length?ps.map(productCard).join(''):'<div class="empty">No products found. Add your first product above.</div>';wireProductButtons()}
+function wireProductButtons(){
+document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const p=state.products.find(x=>x.id===b.dataset.edit);if(!p)return;$('editId').value=p.id;$('pName').value=p.name;$('pSku').value=p.sku;$('pQty').value=p.qty;$('pCost').value=p.cost;$('pPrice').value=p.price;$('pLow').value=p.low;$('productFormTitle').textContent='Edit product';$('saveProductBtn').textContent='Update product';$('cancelEdit').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})});
+document.querySelectorAll('[data-restock]').forEach(b=>b.onclick=()=>{const p=state.products.find(x=>x.id===b.dataset.restock);if(!p)return;const n=prompt('How many units to add?', '1');if(n===null)return;const v=Number(n);if(!Number.isInteger(v)||v<1){alert('Enter a whole number greater than 0.');return}p.qty+=v;save()});
+document.querySelectorAll('[data-delete]').forEach(b=>b.onclick=()=>{const p=state.products.find(x=>x.id===b.dataset.delete);if(p&&confirm(`Delete "${p.name}"? Past sales records will remain.`)){state.products=state.products.filter(x=>x.id!==p.id);save()}});
+}
+function resetProductForm(){$('productForm').reset();$('editId').value='';$('pQty').value=1;$('pLow').value=5;$('productFormTitle').textContent='Add a product';$('saveProductBtn').textContent='Save product';$('cancelEdit').classList.add('hidden')}
+$('cancelEdit').onclick=resetProductForm;
+$('search').addEventListener('input',renderProducts);
+$('productForm').addEventListener('submit',e=>{e.preventDefault();const id=$('editId').value;const name=$('pName').value.trim(),sku=$('pSku').value.trim();const qty=Number($('pQty').value),cost=Number($('pCost').value),price=Number($('pPrice').value),lowQty=Number($('pLow').value);
+if(!name||![qty,cost,price,lowQty].every(Number.isFinite)||![qty,lowQty].every(Number.isInteger)||qty<0||cost<0||price<0||lowQty<0){alert('Please check the product details. Quantity and alert level must be whole numbers, zero or more.');return}
+if(state.products.some(p=>p.id!==id&&sku&&p.sku.toLowerCase()===sku.toLowerCase())){alert('That product code is already in use.');return}
+if(id){const p=state.products.find(x=>x.id===id);if(p)Object.assign(p,{name,sku,qty,cost,price,low:lowQty})}else state.products.push({id:uid(),name,sku,qty,cost,price,low:lowQty});
+resetProductForm();save();switchTab('products')
+});
+function renderSaleSelect(){const current=$('saleProduct').value;$('saleProduct').innerHTML='<option value="">Choose a product…</option>'+state.products.map(p=>`<option value="${p.id}">${esc(p.name)} — ${p.qty} available</option>`).join('');if(state.products.some(p=>p.id===current))$('saleProduct').value=current;updateSalePrice()}
+function updateSalePrice(){const p=state.products.find(p=>p.id===$('saleProduct').value);$('salePrice').value=p?p.price:'';$('saleQty').max=p?p.qty:1}
+$('saleProduct').addEventListener('change',updateSalePrice);
+$('saleForm').addEventListener('submit',e=>{e.preventDefault();const p=state.products.find(p=>p.id===$('saleProduct').value),qty=Number($('saleQty').value),price=Number($('salePrice').value),date=$('saleDate').value;if(!p){alert('Choose a product.');return}if(!Number.isInteger(qty)||qty<1||qty>p.qty){alert(`Enter a quantity between 1 and ${p.qty}.`);return}if(!Number.isFinite(price)||price<0){alert('Enter a valid selling price.');return}p.qty-=qty;state.sales.unshift({id:uid(),productId:p.id,name:p.name,qty,price,cost:p.cost,date,created:Date.now()});save();$('saleQty').value=1;renderSaleSelect();switchTab('sales');alert('Sale recorded and stock updated.')});
+function saleCard(s){return `<div class="item"><div class="itemtop"><div><div class="itemname">${esc(s.name)}</div><div class="sku">${esc(s.date||'No date')} · ${s.qty} unit(s)</div></div><div><b>${money(s.price*s.qty)}</b></div></div><div class="pills"><span class="pill">Cost ${money(s.cost*s.qty)}</span><span class="pill">Est. profit ${money((s.price-s.cost)*s.qty)}</span></div><div class="actions"><button class="danger smallbtn" data-undo="${s.id}">Delete sale / restore stock</button></div></div>`}
+function renderSales(){$('saleDate').value=$('saleDate').value||new Date().toISOString().slice(0,10);renderSaleSelect();$('salesList').innerHTML=state.sales.length?state.sales.map(saleCard).join(''):'<div class="empty">No sales recorded yet.</div>';document.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>{const s=state.sales.find(x=>x.id===b.dataset.undo);if(!s)return;if(confirm('Delete this sale and return its quantity to stock?')){const p=state.products.find(x=>x.id===s.productId);if(p)p.qty+=s.qty;state.sales=state.sales.filter(x=>x.id!==s.id);save()}})}
+function renderDashboard(){const units=state.products.reduce((n,p)=>n+p.qty,0),revenue=state.sales.reduce((n,s)=>n+s.price*s.qty,0),profit=state.sales.reduce((n,s)=>n+(s.price-s.cost)*s.qty,0),lows=state.products.filter(low);$('statProducts').textContent=state.products.length;$('statUnits').textContent=units;$('statRevenue').textContent=money(revenue);$('statProfit').textContent=money(profit);$('lowNotice').innerHTML=lows.length?`<div class="notice">⚠️ ${lows.length} product(s) at or below their low-stock alert.</div>`:'';$('lowList').innerHTML=lows.length?lows.map(p=>`<div class="item"><b>${esc(p.name)}</b><div class="sku">${p.qty} left · alert at ${p.low}</div></div>`).join(''):'<div class="card">All products are above their low-stock levels.</div>';$('recentSales').innerHTML=state.sales.length?state.sales.slice(0,5).map(s=>`<div class="item"><div class="itemtop"><div><b>${esc(s.name)}</b><div class="sku">${esc(s.date)} · ${s.qty} unit(s)</div></div><b>${money(s.price*s.qty)}</b></div></div>`).join(''):'<div class="card">No sales yet.</div>'}
+function render(){renderDashboard();renderProducts();renderSales()}
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify({...state,exportedAt:new Date().toISOString(),format:'inventory-manager-backup-v1'},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='inventory-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const data=JSON.parse(await f.text());if(!Array.isArray(data.products)||!Array.isArray(data.sales))throw Error('Invalid backup');if(confirm('Restore this backup? Current data will be replaced.')){state={products:data.products,sales:data.sales};save();alert('Backup restored.')}}catch(err){alert('Could not restore this file. Choose a valid Inventory Manager JSON backup.')}e.target.value=''});
+$('clearBtn').onclick=()=>{if(confirm('Permanently delete all products and sales from this browser? Export a backup first if needed.')){state={products:[],sales:[]};save();resetProductForm();alert('App data cleared.')}};
+load();
+})();
+</script>
+</body>
+</html>

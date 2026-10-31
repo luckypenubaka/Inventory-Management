@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14532d">
+<title>Inventory Manager</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><h1>📦 Inventory Manager</h1><p>Products · Stock · Sales · Profit</p></header>
+<main>
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="products">Products</button>
+    <button class="tab" data-tab="sales">Record sale</button>
+    <button class="tab" data-tab="backup">Backup</button>
+  </div>
+  <section class="panel active" id="dashboard">
+    <div class="grid">
+      <div class="stat"><small>Products</small><strong id="statProducts">0</strong></div>
+      <div class="stat"><small>Total units in stock</small><strong id="statUnits">0</strong></div>
+      <div class="stat"><small>Sales revenue</small><strong id="statRevenue">₹0.00</strong></div>
+      <div class="stat"><small>Estimated profit</small><strong id="statProfit">₹0.00</strong></div>
+    </div>
+    <div id="lowNotice"></div>
+    <h2>Low-stock products</h2><div id="lowList"></div>
+    <h2>Recent sales</h2><div id="recentSales"></div>
+  </section>
+  <section class="panel" id="products">
+    <div class="formbox">
+      <h2 id="productFormTitle">Add a product</h2>
+      <form id="productForm">
+        <input id="editId" type="hidden">
+        <label for="pName">Product name *</label><input id="pName" required maxlength="100" placeholder="e.g. Cotton saree">
+        <div class="row"><div><label for="pSku">SKU / code</label><input id="pSku" maxlength="40" placeholder="e.g. SAR001"></div><div><label for="pQty">Quantity *</label><input id="pQty" required type="number" min="0" step="1" value="1"></div></div>
+        <div class="row"><div><label for="pCost">Cost price (₹) *</label><input id="pCost" required type="number" min="0" step="0.01" placeholder="What you paid"></div><div><label for="pPrice">Selling price (₹) *</label><input id="pPrice" required type="number" min="0" step="0.01" placeholder="Customer price"></div></div>
+        <label for="pLow">Low-stock alert at quantity</label><input id="pLow" type="number" min="0" step="1" value="5">
+        <div class="actions"><button class="primary" type="submit" id="saveProductBtn">Save product</button><button class="secondary hidden" type="button" id="cancelEdit">Cancel edit</button></div>
+        <div class="hint">Profit is estimated as (selling price − cost price) × units sold. Other expenses are not included.</div>
+      </form>
+    </div>
+    <h2>All products</h2><input class="search" id="search" placeholder="Search by product name or code…"><div id="productList"></div>
+  </section>
+  <section class="panel" id="sales">
+    <div class="formbox">
+      <h2>Record a sale</h2>
+      <form id="saleForm">
+        <label for="saleProduct">Product *</label><select id="saleProduct" required></select>
+        <div class="row"><div><label for="saleQty">Quantity sold *</label><input id="saleQty" required type="number" min="1" step="1" value="1"></div><div><label for="salePrice">Selling price per unit (₹)</label><input id="salePrice" type="number" min="0" step="0.01" required></div></div>
+        <label for="saleDate">Sale date</label><input id="saleDate" type="date" required>
+        <button class="primary" type="submit" style="margin-top:12px;width:100%">Record sale and reduce stock</button>
+      </form>
+    </div>
+    <h2>Sales history</h2><div id="salesList"></div>
+  </section>
+  <section class="panel" id="backup">
+    <div class="formbox"><h2>Backup your data</h2><p>Data is stored in this browser on this device. Export a backup regularly so you can restore it if browser data is cleared or the phone changes.</p><button class="primary" id="exportBtn" style="width:100%">Download backup file</button>
+      <label for="importFile">Restore from backup file</label><input type="file" id="importFile" accept=".json,application/json"><p class="hint">Restoring replaces the current product and sales data.</p>
+    </div>
+    <div class="formbox"><h3>Important</h3><p>Do not clear Chrome site data if you have not exported a backup. This basic version stores data locally and does not sync to another phone.</p><button class="danger" id="clearBtn">Delete all app data</button></div>
+  </section>
+  <footer>Inventory Manager · Your stock data stays on this device</footer>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
